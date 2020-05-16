@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.design.widget.FloatingActionButton
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.view.View
 import android.widget.ListView
 import com.google.android.gms.tasks.OnCompleteListener
@@ -30,7 +31,7 @@ class QuestionDetailActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var mFavoriteRef: DatabaseReference
 
 
-    private var favFrag: Boolean = true
+    private var favFrag: Boolean = false
 
 
     private val mEventListener = object : ChildEventListener {
@@ -144,20 +145,19 @@ class QuestionDetailActivity : AppCompatActivity(), View.OnClickListener {
 
 //        mFavoriteRef.getKey()
 
-
-        if(user != null){
-            setFavoriteButton(favFrag)
-        }
     }
 
-    @SuppressLint("RestrictedApi")
     private fun setFavoriteButton(favStatus: Boolean) {
         if(favStatus){
-            favorite.visibility = View.GONE
+            Log.d("Kotlintest","favを隠す---")
+
+//            favorite.visibility = View.GONE
             nofavorite.setOnClickListener(this)
 
         }else{
-            nofavorite.visibility = View.GONE
+            Log.d("Kotlintest","nofavを隠す---")
+
+ //           nofavorite.visibility = View.GONE
             favorite.setOnClickListener(this)
 
         }
@@ -173,17 +173,24 @@ class QuestionDetailActivity : AppCompatActivity(), View.OnClickListener {
 
         // mFavoriteListneがtrue
         if(v.id == R.id.favorite){
+            Log.d("Kotlintest","fav押された")
             // お気に入り登録がされていればお気に入りから削除
             mFavoriteRef.child(mQuestion.questionUid).removeValue()
             nofavorite.visibility = View.VISIBLE
             favorite.visibility = View.GONE
 
         }else if (v.id == R.id.nofavorite) {
+            Log.d("Kotlintest","nofav押された")
+
             // お気に入り登録がされていなければお気に入りへ登録
             data["genre"] = mQuestion.genre.toString()
             mFavoriteRef.child(mQuestion.questionUid).setValue(data)
             favorite.visibility = View.VISIBLE
+            Log.d("Kotlintest","favを表示する")
+
             nofavorite.visibility = View.GONE
+            Log.d("Kotlintest","nofavを隠す")
+
 
         }
     }
@@ -208,13 +215,20 @@ class QuestionDetailActivity : AppCompatActivity(), View.OnClickListener {
             favorite.visibility = View.GONE
             nofavorite.visibility = View.GONE
         }else{
+            favorite.setOnClickListener(this)
+            nofavorite.setOnClickListener(this)
+
             // ログインしていればお気に入り可否ボタンを配置
             if(favFrag){
+                Log.d("Kotlintest","fav配置")
                 // Userがお気に入り登録していたらお気に入り完了ボタンを配置
-                favorite.setOnClickListener(this)
+                nofavorite.visibility = View.GONE
+
             }else{
+                Log.d("Kotlintest","nofav配置")
                 // Userがお気に入り登録していなければお気に入り未完了ボタンを配置
-                nofavorite.setOnClickListener(this)
+                favorite.visibility = View.GONE
+
             }
         }
     }
