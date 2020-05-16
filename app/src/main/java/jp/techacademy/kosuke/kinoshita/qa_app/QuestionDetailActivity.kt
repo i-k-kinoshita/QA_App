@@ -30,7 +30,7 @@ class QuestionDetailActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var mFavoriteRef: DatabaseReference
 
 
-    private var favFrag: Boolean = false
+    private var favFrag: Boolean = true
 
 
     private val mEventListener = object : ChildEventListener {
@@ -73,7 +73,12 @@ class QuestionDetailActivity : AppCompatActivity(), View.OnClickListener {
     }
     private val mFavoriteListener = object : ChildEventListener {
         override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
-            favFrag = true
+            val favoriteQuestionUid = dataSnapshot.key ?: ""
+
+            if(favoriteQuestionUid == mQuestion.questionUid){
+                favFrag = true
+            }
+
         }
 
         override fun onChildChanged(dataSnapshot: DataSnapshot, s: String?) {
@@ -112,7 +117,7 @@ class QuestionDetailActivity : AppCompatActivity(), View.OnClickListener {
         val dataBaseReference = FirebaseDatabase.getInstance().reference
 
         val user = FirebaseAuth.getInstance().currentUser
-        mFavoriteRef = dataBaseReference.child(FavoritePATH).child(user!!.uid).child(mQuestion.questionUid)
+        mFavoriteRef = dataBaseReference.child(FavoritePATH).child(user!!.uid)
 
 
 
@@ -163,22 +168,22 @@ class QuestionDetailActivity : AppCompatActivity(), View.OnClickListener {
     override fun onClick(v: View) {
         val user = FirebaseAuth.getInstance().currentUser
         val dataBaseReference = FirebaseDatabase.getInstance().reference
-        mFavoriteRef = dataBaseReference.child(FavoritePATH).child(user!!.uid).child(mQuestion.questionUid)
+        mFavoriteRef = dataBaseReference.child(FavoritePATH).child(user!!.uid)
         val data = HashMap<String, String>()
 
         // mFavoriteListneがtrue
         if(v.id == R.id.favorite){
-            // お気に入り登録がされていれば
-            // お気に入りから削除
-
-            mFavoriteRef.removeValue()
+            // お気に入り登録がされていればお気に入りから削除
+            mFavoriteRef.child(mQuestion.questionUid).removeValue()
+            nofavorite.visibility = View.VISIBLE
+            favorite.visibility = View.GONE
 
         }else if (v.id == R.id.nofavorite) {
-            // お気に入り登録がされていなければ
-            // お気に入りへ登録Favorite
-
+            // お気に入り登録がされていなければお気に入りへ登録
             data["genre"] = mQuestion.genre.toString()
-            mFavoriteRef.setValue(data)
+            mFavoriteRef.child(mQuestion.questionUid).setValue(data)
+            favorite.visibility = View.VISIBLE
+            nofavorite.visibility = View.GONE
 
         }
     }
@@ -187,6 +192,16 @@ class QuestionDetailActivity : AppCompatActivity(), View.OnClickListener {
     override fun onResume() {
         super.onResume()
         val user = FirebaseAuth.getInstance().currentUser
+//        val dataBaseReference = FirebaseDatabase.getInstance().reference
+//        mFavoriteRef = dataBaseReference.child(FavoritePATH).child(user!!.uid)
+//
+//        val favStatus = mFavoriteRef.child(mQuestion.questionUid).key
+//
+//        if(favStatus == null){
+//            favFrag = false
+//        }else{
+//            favFrag = true
+//        }
 
         // ログインしていなければお気に入りボタンを非表示
         if (user == null) {
@@ -197,12 +212,9 @@ class QuestionDetailActivity : AppCompatActivity(), View.OnClickListener {
             if(favFrag){
                 // Userがお気に入り登録していたらお気に入り完了ボタンを配置
                 favorite.setOnClickListener(this)
-                nofavorite.visibility = View.GONE
-
             }else{
                 // Userがお気に入り登録していなければお気に入り未完了ボタンを配置
                 nofavorite.setOnClickListener(this)
-                favorite.visibility = View.GONE
             }
         }
     }
