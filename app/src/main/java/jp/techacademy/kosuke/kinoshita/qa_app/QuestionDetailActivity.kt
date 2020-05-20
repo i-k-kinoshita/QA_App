@@ -27,7 +27,7 @@ import android.support.v4.app.SupportActivity
 import android.support.v4.app.SupportActivity.ExtraData
 import android.support.v4.content.ContextCompat.getSystemService
 import android.icu.lang.UCharacter.GraphemeClusterBreak.T
-
+import android.support.design.widget.Snackbar
 
 
 class QuestionDetailActivity : AppCompatActivity(), View.OnClickListener {
@@ -39,7 +39,6 @@ class QuestionDetailActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var mFavoriteRef: DatabaseReference
 
     private var favFrag by Delegates.notNull<Boolean>()
-
 
     private val mEventListener = object : ChildEventListener {
         override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
@@ -79,33 +78,6 @@ class QuestionDetailActivity : AppCompatActivity(), View.OnClickListener {
 
         }
     }
-//    private val mFavoriteListener = object : ChildEventListener {
-//        override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
-//            val favoriteQuestionUid = dataSnapshot.key ?: ""
-//            if(favoriteQuestionUid == mQuestion.questionUid){
-//                favFrag = true
-//            }
-//        }
-//
-//        override fun onChildChanged(dataSnapshot: DataSnapshot, s: String?) {
-//
-//        }
-//
-//        override fun onChildRemoved(dataSnapshot: DataSnapshot) {
-//            val favoriteQuestionUid = dataSnapshot.key ?: ""
-//            if(favoriteQuestionUid == mQuestion.questionUid){
-//                favFrag = false
-//            }
-//        }
-//
-//        override fun onChildMoved(dataSnapshot: DataSnapshot, s: String?) {
-//
-//        }
-//
-//        override fun onCancelled(databaseError: DatabaseError) {
-//
-//        }
-//    }
     private var postListener: ValueEventListener = object : ValueEventListener {
         @SuppressLint("RestrictedApi")
         override fun onDataChange(dataSnapshot: DataSnapshot) {
@@ -143,8 +115,6 @@ class QuestionDetailActivity : AppCompatActivity(), View.OnClickListener {
         mAdapter.notifyDataSetChanged()
 
         val dataBaseReference = FirebaseDatabase.getInstance().reference
-        val user = FirebaseAuth.getInstance().currentUser
-        mFavoriteRef = dataBaseReference.child(FavoritePATH).child(user!!.uid)
 
         fab.setOnClickListener {
             // ログイン済みのユーザーを取得する
@@ -156,18 +126,13 @@ class QuestionDetailActivity : AppCompatActivity(), View.OnClickListener {
                 startActivity(intent)
             } else {
                 // Questionを渡して回答作成画面を起動する
-                // --- ここから ---
                 val intent = Intent(applicationContext, AnswerSendActivity::class.java)
                 intent.putExtra("question", mQuestion)
                 startActivity(intent)
-                // --- ここまで ---
             }
         }
         mAnswerRef = dataBaseReference.child(ContentsPATH).child(mQuestion.genre.toString()).child(mQuestion.questionUid).child(AnswersPATH)
         mAnswerRef.addChildEventListener(mEventListener)
-  //      mFavoriteRef.addChildEventListener(mFavoriteListener)
-        mFavoriteRef.child(mQuestion.questionUid).addValueEventListener(postListener)
-
     }
 
     @SuppressLint("RestrictedApi")
@@ -181,16 +146,18 @@ class QuestionDetailActivity : AppCompatActivity(), View.OnClickListener {
         if(favFrag){
             // お気に入り登録がされていればお気に入りから削除
             mFavoriteRef.child(mQuestion.questionUid).removeValue()
+            Snackbar.make(v, "お気に入りから削除しました", Snackbar.LENGTH_LONG).show()
             nofavorite.visibility = View.VISIBLE
             favorite.visibility = View.GONE
-
+            favFrag = false
         }else{
             // お気に入り登録がされていなければお気に入りへ登録
             data["genre"] = mQuestion.genre.toString()
             mFavoriteRef.child(mQuestion.questionUid).setValue(data)
+            Snackbar.make(v, "お気に入りに追加しました", Snackbar.LENGTH_LONG).show()
             favorite.visibility = View.VISIBLE
             nofavorite.visibility = View.GONE
-
+            favFrag = true
         }
     }
 
@@ -206,6 +173,11 @@ class QuestionDetailActivity : AppCompatActivity(), View.OnClickListener {
         }else{
             favorite.setOnClickListener(this)
             nofavorite.setOnClickListener(this)
+
+            val dataBaseReference = FirebaseDatabase.getInstance().reference
+            mFavoriteRef = dataBaseReference.child(FavoritePATH).child(user!!.uid)
+            mFavoriteRef.child(mQuestion.questionUid).addValueEventListener(postListener)
+
         }
     }
 }

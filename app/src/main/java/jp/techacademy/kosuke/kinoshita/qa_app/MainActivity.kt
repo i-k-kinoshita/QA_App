@@ -20,7 +20,9 @@ import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import android.util.Base64  //追加する
+import android.view.View
 import android.widget.ListView
+import kotlinx.android.synthetic.main.activity_main.*
 
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -162,20 +164,38 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             intent.putExtra("question", mQuestionArrayList[position])
             startActivity(intent)
         }
+
     }
     override fun onResume() {
         super.onResume()
         val navigationView = findViewById<NavigationView>(R.id.nav_view)
+        val user = FirebaseAuth.getInstance().currentUser
 
         // 1:趣味を既定の選択とする
         if(mGenre == 0) {
             onNavigationItemSelected(navigationView.menu.getItem(0))
         }
+        //        menuInflater.inflate(R.menu.activity_main_drawer, menu) // カスタムメニュー設定
+
+        if(user == null){
+
+            val menu = navigationView.menu
+            val menuItem = menu.findItem(R.id.nav_favorite) // menu1取得
+            menuItem.isVisible = false // 隠す
+
+        }else{
+            val menu = navigationView.menu
+            val menuItem = menu.findItem(R.id.nav_favorite) // menu1取得
+            menuItem.isVisible = true // 隠す
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        val user = FirebaseAuth.getInstance().currentUser
+
         // Inflate the menu this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.menu_main, menu)
+
         return true
     }
 
@@ -206,6 +226,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         } else if (id == R.id.nav_compter) {
             mToolbar.title = "コンピューター"
             mGenre = 4
+        } else if (id == R.id.nav_favorite) {
+            val intent = Intent(applicationContext, FavoriteActivity::class.java)
+            startActivity(intent)
+//            mGenre = 1
         }
 
         val drawer = findViewById<DrawerLayout>(R.id.drawer_layout)
@@ -221,6 +245,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         if (mGenreRef != null) {
             mGenreRef!!.removeEventListener(mEventListener)
         }
+
         mGenreRef = mDatabaseReference.child(ContentsPATH).child(mGenre.toString())
         mGenreRef!!.addChildEventListener(mEventListener)
         // --- ここまで追加する ---
